@@ -2,7 +2,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:pharmacy_system/Screens/Employees/employees_screen.dart';
+import 'package:pharmacy_system/Screens/inventory/inventory_screen.dart';
 import 'package:pharmacy_system/Screens/medicines/add_medicine_screen.dart';
+import 'package:pharmacy_system/Screens/purchases/purchases_screen.dart';
+import 'package:pharmacy_system/Screens/shortcoming/shortcoming_screen.dart';
 import 'package:pharmacy_system/backend/fierbase_functions.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -52,8 +55,10 @@ class HomeScreen extends StatelessWidget {
                           kIsWeb ? 3 : 1, // 3 for web, 1 for mobile
                     ),
                     children: [
-                      _buildGridItem(
-                          "Inventory", Icons.inventory_2_outlined, () {}),
+                      _buildGridItem("Inventory", Icons.inventory_2_outlined,
+                          () {
+                        Navigator.pushNamed(context, InventoryScreen.routeName);
+                      }),
                       _buildGridItem(
                           "Sells", Icons.shopping_cart_outlined, () {}),
                       _buildGridItem("Medicine", Icons.medication_rounded, () {
@@ -64,11 +69,16 @@ class HomeScreen extends StatelessWidget {
                         Navigator.pushNamed(context, EmployeesScreen.routeName);
                       }),
                       _buildGridItem(
-                          "Shortcoming", Icons.warning_amber_outlined, () {}),
+                          "Shortcoming", Icons.warning_amber_outlined, () {
+                        Navigator.pushNamed(
+                            context, ShortcomingScreen.routeName);
+                      }),
                       _buildGridItem(
                           "Analysis", Icons.analytics_outlined, () {}),
-                      _buildGridItem(
-                          "Purchases", Icons.shopping_bag_outlined, () {}),
+                      _buildGridItem("Purchases", Icons.shopping_bag_outlined,
+                          () {
+                        Navigator.pushNamed(context, PurchasesScreen.routeName);
+                      }),
                       _buildGridItem(
                           "Customers", Icons.people_alt_outlined, () {}),
                     ],

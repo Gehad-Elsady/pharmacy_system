@@ -25,7 +25,7 @@ class _EmployeesScreenState extends State<EmployeesScreen> {
                     return AlertDialog(
                         backgroundColor: Colors.blueGrey,
                         title: Text(
-                          "Update Employee Details",
+                          "Add Employee Details",
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 20,

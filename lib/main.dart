@@ -5,7 +5,10 @@ import 'package:pharmacy_system/Screens/Auth/Signup_screen.dart';
 import 'package:pharmacy_system/Screens/Auth/login_screen.dart';
 import 'package:pharmacy_system/Screens/Employees/employees_screen.dart';
 import 'package:pharmacy_system/Screens/Home/home_screen.dart';
+import 'package:pharmacy_system/Screens/inventory/inventory_screen.dart';
 import 'package:pharmacy_system/Screens/medicines/add_medicine_screen.dart';
+import 'package:pharmacy_system/Screens/purchases/purchases_screen.dart';
+import 'package:pharmacy_system/Screens/shortcoming/shortcoming_screen.dart';
 import 'package:pharmacy_system/backend/firebase_options.dart';
 
 void main() async {
@@ -36,6 +39,9 @@ class MyApp extends StatelessWidget {
               HomeScreen.routeName: (context) => HomeScreen(),
               EmployeesScreen.routeName: (context) => EmployeesScreen(),
               AddMedicineScreen.routeName: (context) => AddMedicineScreen(),
+              InventoryScreen.routeName: (context) => InventoryScreen(),
+              PurchasesScreen.routeName: (context) => PurchasesScreen(),
+              ShortcomingScreen.routeName: (context) => ShortcomingScreen(),
             },
           );
         });

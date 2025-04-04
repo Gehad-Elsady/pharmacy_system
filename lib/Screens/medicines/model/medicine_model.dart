@@ -1,20 +1,22 @@
 class MedicineModel {
+  String? id;
   String name;
   String price;
-  String? expiryDate;
-  String? quantity;
-  MedicineModel(
-      {required this.name,
-      required this.price,
-      this.expiryDate,
-      this.quantity});
+  String? userId;
+
+  MedicineModel({
+    required this.name,
+    required this.price,
+    this.id,
+    this.userId,
+  });
 
   Map<String, dynamic> toMap() {
     return {
       'name': name,
       'price': price,
-      'expiryDate': expiryDate,
-      'quantity': quantity
+      'id': id,
+      'userId': userId,
     };
   }
 
@@ -24,8 +26,8 @@ class MedicineModel {
     return MedicineModel(
       name: jason['name'],
       price: jason['price'],
-      expiryDate: jason['expiryDate'],
-      quantity: jason['quantity'],
+      id: jason['id'],
+      userId: jason['userId'],
     );
   }
 }

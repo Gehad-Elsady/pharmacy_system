@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:pharmacy_system/Screens/Auth/model/usermodel.dart';
 import 'package:pharmacy_system/Screens/Employees/model/employee_model.dart';
 import 'package:pharmacy_system/Screens/medicines/model/medicine_model.dart';
+import 'package:pharmacy_system/Screens/purchases/model/purchases_model.dart';
 
 class FirebaseFunctions {
   static SignUp(String emailAddress, String password,
@@ -160,7 +161,7 @@ class FirebaseFunctions {
       // Query the collection where type is "Seeds"
       return _firestore.collection('Employees').snapshots().map((snapshot) {
         return snapshot.docs.map((doc) {
-          final data = doc.data() as Map<String, dynamic>;
+          final data = doc.data();
           return EmployeeModel(
             name: data['name'] ?? 'No Name',
             email: data['email'] ?? 'No Email',
@@ -244,7 +245,7 @@ class FirebaseFunctions {
         return; // Exit early if no employee found
       }
 
-      // // Authenticate and delete the user from Firebase Authentication
+      // Authenticate and delete the user from Firebase Authentication
       try {
         User? user = FirebaseAuth.instance.currentUser;
 
@@ -293,5 +294,224 @@ class FirebaseFunctions {
     var collection = getMedicinesCollection();
     var docRef = collection.doc(medicine.name);
     return docRef.set(medicine);
+  }
+
+  //---------------------------------Purchases--------------------------------------------
+  static CollectionReference<MedicineModel> getPurchasesCollection() {
+    return FirebaseFirestore.instance
+        .collection("Purchases")
+        .withConverter<MedicineModel>(
+      fromFirestore: (snapshot, options) {
+        return MedicineModel.fromJson(snapshot.data()!);
+      },
+      toFirestore: (user, _) {
+        return user.toMap();
+      },
+    );
+  }
+
+  static Future<void> addMedicinesToPurchases(MedicineModel medicine) {
+    var collection = getPurchasesCollection();
+    var docRef = collection.doc(); // Generate new document reference
+
+    MedicineModel data = MedicineModel(
+      id: docRef.id, // Corrected: Use docRef.id instead of toString()
+      name: medicine.name,
+      price: medicine.price,
+      userId: FirebaseAuth.instance.currentUser!.uid,
+    );
+
+    return docRef.set(data); // Convert object to a Firestore-compatible Map
+  }
+
+  static Stream<List<MedicineModel>> getPurchasesData() {
+    final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+    try {
+      // Query the collection where type is "Seeds"
+      return _firestore.collection('Purchases').snapshots().map((snapshot) {
+        return snapshot.docs.map((doc) {
+          final data = doc.data();
+          return MedicineModel(
+            name: data['name'] ?? 'No Name',
+            price: data['price'] ?? 'No Price',
+            id: data['id'] ?? 'No ID',
+          );
+        }).toList();
+      });
+    } catch (e) {
+      print('Error fetching services: $e');
+      return const Stream.empty(); // Return an empty stream in case of error
+    }
+  }
+
+  static Future<void> deletePurchaseItem(String medicineId) async {
+    final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+    try {
+      // Query Firestore to find the document where 'id' field matches medicineId
+      var querySnapshot = await _firestore
+          .collection('Purchases')
+          .where('id', isEqualTo: medicineId)
+          .get();
+
+      // Loop through and delete matching documents
+      for (var doc in querySnapshot.docs) {
+        await _firestore.collection('Purchases').doc(doc.id).delete();
+      }
+
+      print('Item deleted successfully!');
+    } catch (e) {
+      print('Error deleting item: $e');
+    }
+  }
+
+  static Future<void> deleteUserPurchases() async {
+    final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+    final String? userId = FirebaseAuth.instance.currentUser?.uid;
+
+    if (userId == null) {
+      print('No user logged in.');
+      return;
+    }
+
+    try {
+      // Query Firestore to find documents where 'userId' field matches the current user ID
+      var querySnapshot = await _firestore
+          .collection('Purchases')
+          .where('userId', isEqualTo: userId)
+          .get();
+
+      // Loop through and delete matching documents
+      for (var doc in querySnapshot.docs) {
+        await _firestore.collection('Purchases').doc(doc.id).delete();
+      }
+
+      print('All purchases for user $userId deleted successfully!');
+    } catch (e) {
+      print('Error deleting purchases: $e');
+    }
+  }
+//----------------------------------Inventory--------------------------------------------
+
+  static CollectionReference<PurchasesModel> getInventoryCollection() {
+    return FirebaseFirestore.instance
+        .collection("Inventory")
+        .withConverter<PurchasesModel>(
+      fromFirestore: (snapshot, options) {
+        return PurchasesModel.fromJson(snapshot.data()!);
+      },
+      toFirestore: (user, _) {
+        return user.toJson();
+      },
+    );
+  }
+
+  static Future<void> addMedicinesToInventory(PurchasesModel medicine) async {
+    var collection = getInventoryCollection();
+
+    // Query for an existing medicine with the same name and expiration date
+    var querySnapshot = await collection
+        .where("medicineName", isEqualTo: medicine.medicineName)
+        .where("medicineExpiryDate", isEqualTo: medicine.medicineExpiryDate)
+        .where("medicinePrice", isEqualTo: medicine.medicinePrice)
+        .get();
+
+    if (querySnapshot.docs.isNotEmpty) {
+      // Medicine exists, update its quantity
+      var doc = querySnapshot.docs.first;
+      var existingQuantity = doc["medicineQuantity"] ?? 0;
+      var newQuantity = existingQuantity + medicine.medicineQuantity;
+
+      await collection.doc(doc.id).update({"medicineQuantity": newQuantity});
+    } else {
+      // Medicine does not exist, add a new document
+      var docRef = collection.doc();
+      await docRef.set(medicine);
+    }
+  }
+
+  static Stream<List<PurchasesModel>> getInventoryData() {
+    final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+    try {
+      // Query the collection where type is "Seeds"
+      return _firestore.collection('Inventory').snapshots().map((snapshot) {
+        return snapshot.docs.map((doc) {
+          final data = doc.data();
+          return PurchasesModel(
+            medicineName: data['medicineName'] ?? 'No Name',
+            medicineExpiryDate: data['medicineExpiryDate'] ?? 'No Expiry Date',
+            medicinePrice: data['medicinePrice'] ?? 'No Price',
+            medicineQuantity: data['medicineQuantity'] ?? 'No Quantity',
+            dateOfDay: data['dateOfDay'] ?? 'No Date',
+            invoiceId: data['invoiceId'] ?? 'No Invoice ID',
+            medicineSmallUnit: data['medicineSmallUnit'] ?? 'No Small Unit',
+            medicineSmallUnitNumber:
+                data['medicineSmallUnitNumber'] ?? 'No Small Unit Number',
+            supplierId: data['supplierId'] ?? 'No Supplier ID',
+            timeOfDay: data['timeOfDay'] ?? 'No Time',
+            totalPrice: data['totalPrice'] ?? 'No Total Price',
+            userId: data['userId'] ?? 'No User ID',
+          );
+        }).toList();
+      });
+    } catch (e) {
+      print('Error fetching services: $e');
+      return const Stream.empty(); // Return an empty stream in case of error
+    }
+  }
+
+  //----------------------------Shortcomings--------------------------------------------
+  static Stream<List<PurchasesModel>> getShortcomingsData() {
+    final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+    // Calculate the date range (now and one month from now)
+    DateTime now = DateTime.now();
+    DateTime oneMonthFromNow = now.add(Duration(days: 30));
+
+    try {
+      return _firestore.collection('Inventory').snapshots().map((snapshot) {
+        return snapshot.docs
+            .map((doc) {
+              final data = doc.data();
+
+              // Parse the string to DateTime
+              DateTime expiryDate =
+                  DateTime.tryParse(data['medicineExpiryDate'] ?? '') ??
+                      DateTime(2100);
+
+              // Filter medicines with quantity < 5 and expiry date within the next month
+              if (data['medicineQuantity'] < 6 ||
+                  expiryDate.isBefore(oneMonthFromNow)) {
+                return PurchasesModel(
+                  medicineName: data['medicineName'] ?? 'No Name',
+                  medicineExpiryDate:
+                      data['medicineExpiryDate'] ?? 'No Expiry Date',
+                  medicinePrice: data['medicinePrice'] ?? 'No Price',
+                  medicineQuantity: data['medicineQuantity'] ?? 'No Quantity',
+                  dateOfDay: data['dateOfDay'] ?? 'No Date',
+                  invoiceId: data['invoiceId'] ?? 'No Invoice ID',
+                  medicineSmallUnit:
+                      data['medicineSmallUnit'] ?? 'No Small Unit',
+                  medicineSmallUnitNumber:
+                      data['medicineSmallUnitNumber'] ?? 'No Small Unit Number',
+                  supplierId: data['supplierId'] ?? 'No Supplier ID',
+                  timeOfDay: data['timeOfDay'] ?? 'No Time',
+                  totalPrice: data['totalPrice'] ?? 'No Total Price',
+                  userId: data['userId'] ?? 'No User ID',
+                );
+              } else {
+                return null; // Skip items that don't meet the condition
+              }
+            })
+            .where((item) => item != null)
+            .cast<PurchasesModel>()
+            .toList();
+      });
+    } catch (e) {
+      print('Error fetching services: $e');
+      return const Stream.empty(); // Return an empty stream in case of error
+    }
   }
 }
