@@ -71,12 +71,16 @@ class LoginScreen extends StatelessWidget {
                       ElevatedButton(
                         onPressed: () async {
                           await FirebaseFunctions.Login(
-                              emailController.text, passwordController.text,
+                              emailController.text.trim(), passwordController.text.trim(),
                               onSuccess: () {
                             Navigator.of(context).pushReplacementNamed(
                               HomeScreen.routeName,
                             );
-                          }, onError: () {});
+                          }, onError: (errorMessage) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(errorMessage)),
+                            );
+                          });
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blueAccent,

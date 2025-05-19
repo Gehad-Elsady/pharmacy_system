@@ -1,3 +1,5 @@
+import 'batch_model.dart';
+
 class PurchasesModel {
   String supplierId; //
   String invoiceId; //
@@ -11,6 +13,8 @@ class PurchasesModel {
   String medicineSmallUnitNumber; //
   String totalPrice;
   String userId;
+  List<BatchModel> batches;
+
   PurchasesModel({
     required this.supplierId,
     required this.invoiceId,
@@ -24,7 +28,14 @@ class PurchasesModel {
     required this.medicineSmallUnitNumber,
     required this.totalPrice,
     required this.userId,
-  });
+    List<BatchModel>? batches,
+  }) : batches = batches ??
+            [
+              BatchModel(
+                expiryDate: medicineExpiryDate,
+                quantity: medicineQuantity,
+              )
+            ];
 
   Map<String, dynamic> toJson() {
     return {
@@ -40,6 +51,7 @@ class PurchasesModel {
       'medicineSmallUnitNumber': medicineSmallUnitNumber,
       'totalPrice': totalPrice,
       'userId': userId,
+      'batches': batches.map((batch) => batch.toJson()).toList(),
     };
   }
 
@@ -57,6 +69,11 @@ class PurchasesModel {
       medicineSmallUnitNumber: json['medicineSmallUnitNumber'],
       totalPrice: json['totalPrice'],
       userId: json['userId'],
+      batches: json['batches'] != null
+          ? (json['batches'] as List)
+              .map((batch) => BatchModel.fromJson(batch))
+              .toList()
+          : null,
     );
   }
 }
